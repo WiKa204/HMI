@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 from scipy.fft import fft, fftfreq, ifft
 
+
 def Zad1():
     def sin(f=1, T=1, Fs=128, phi=0):
         dt = 1.0 / Fs
@@ -89,8 +90,81 @@ def Zad1():
     plt.show()
 
 
+def Zad2():
+    def sin(f=10.2, T=1, Fs=100, phi=0):
+        dt = 1.0 / Fs
+        t = np.arange(0, T, dt)
+        s = np.sin(2 * np.pi * f * t + phi)
+        return (s, t)
+
+    def spect_dB(s, N_fft, F_samp):
+        S = fft(s, N_fft)
+        S_dB = 20 * np.log10(np.abs(S))
+        F = fftfreq(N_fft, 1.0 / F_samp)
+        return (S_dB, F)
+
+    (s, t) = sin()
+    fs = 100
+    T = 1
+    x = np.linspace(11.4, 15.5, 9)
+
+    window_black = np.append(signal.windows.blackman(len(t))*s, x)
+    window_hann = np.append(signal.windows.hann(len(t))*s, x)
+    window_hamm = np.append(signal.windows.hamming(len(t))*s, x)
+
+    orginal, F1 = spect_dB(s, len(s), fs)
+    black, F2 = spect_dB(window_black, len(window_black), fs)
+    hann, F3 = spect_dB(window_hann, len(window_hann), fs)
+    hamm, F4 = spect_dB(window_hamm, len(window_hamm), fs)
+
+    fig, ax = plt.subplots()
+    ax.plot(F1, orginal, 'k', label='Orginal', color='y')
+    ax.plot(F2, black, 'k:', label='Blackman', color='r')
+    ax.plot(F3, hann, 'k--', label='Hann', color='g')
+    ax.plot(F4, hamm, 'k-', label='Hamming', color='b')
+
+    legend = ax.legend(loc='upper right', shadow=True, fontsize='x-large')
+    legend.get_frame().set_facecolor('C0')
+    plt.show()
+
+def Zad3():
+    data = pd.read_hdf('./data/test_signal_z_3.hdf')
+    # EMG_15 = data['EMG_15']
+    # down_sampling = EMG_15.iloc[::10]
+    # plt.figure()
+    # xf = fftfreq(len(data), 1 / 5120)
+    # xf2 = fftfreq(len(down_sampling), 1 / 5120)
+    # plt.plot(xf, np.abs(fft(data['EMG_15'].values)))
+    # plt.show()
+    # plt.plot(xf, np.abs(fft(EMG_15.values)))
+    # plt.plot(xf2, np.abs(fft(down_sampling.values)))
+    # plt.show()
+    print(data.head())
+    print(len(data))
+    print(f'min: {min(data.index)}')
+    print(f'max: {max(data.index)}')
+    Tobs = max(data.index) - min(data.index)
+    dt = 1/(len(data.values)/Tobs)
+    delta_f = 1 / Tobs
+    # (y, t) = sin(2, T=Tobs, fs=128, phi=0)
+    # Y = dft(y)
+    X = np.arange(0, len(data.values) * delta_f, delta_f)
+    # X = fftfreq(data.values, 1/len(data.values))
+    plt.figure()
+    t = np.arange(0, Tobs, dt)
+    plt.plot(t, data.values)
+    # sf = fftfreq(len(data), 1/120)
+    # plt.stem(X, np.abs(fft(data.values)), use_line_collection=True)
+    plt.show()
+
+
+
 def main():
-    Zad1()
+    # Zad1()
+    # Zad2()
+    Zad3()
+
+
 
 if __name__ == '__main__':
     main()
