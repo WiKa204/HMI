@@ -19,7 +19,7 @@ def Zad1():
 
     (x1, t) = sin(f=f_1, T=T, Fs=Fs)
     (x2, t) = sin(f=f_2, T=T, Fs=Fs)
-    x3 = x1 * x2
+    x3 = x1 + x2
 
     x_z1 = np.append(x1, np.zeros(10))
     x_z2 = np.append(x2, np.zeros(10))
@@ -41,23 +41,39 @@ def Zad1():
     xf_z2 = fftfreq(len(X_z2), 1 / Fs)
     xf_z3 = fftfreq(len(X_z3), 1 / Fs)
 
-    x_w1 = np.append(signal.windows.blackman(len(x1)) * x1, np.zeros(10))
-    x_w2 = np.append(signal.windows.blackman(len(x2)) * x2, np.zeros(10))
-    x_w3 = np.append(signal.windows.blackman(len(x3)) * x3, np.zeros(10))
+    x_w1 = np.append(signal.windows.hann(len(x1)) * x1, np.zeros(10))
+    x_w2 = np.append(signal.windows.hann(len(x2)) * x2, np.zeros(10))
+    x_w3 = np.append(signal.windows.hann(len(x3)) * x3, np.zeros(10))
+
+    x_h1 = signal.windows.hann(len(x1)) * x1
+    x_h2 = signal.windows.hann(len(x2)) * x2
+    x_h3 = signal.windows.hann(len(x3)) * x3
 
     X_w1 = fft(x_w1)
     X_w2 = fft(x_w2)
     X_w3 = fft(x_w3)
 
+    X_h1 = fft(x_h1)
+    X_h2 = fft(x_h2)
+    X_h3 = fft(x_h3)
+
+    xf_w1 = fftfreq(len(X_w1), 1 / Fs)
+    xf_w2 = fftfreq(len(X_w2), 1 / Fs)
+    xf_w3 = fftfreq(len(X_w3), 1 / Fs)
+
+    xf_h1 = fftfreq(len(X_h1), 1 / Fs)
+    xf_h2 = fftfreq(len(X_h2), 1 / Fs)
+    xf_h3 = fftfreq(len(X_h3), 1 / Fs)
+
     fig, axs = plt.subplots(3, 4)
-    axs[0, 0].plot(t, x1)
-    axs[0, 0].set_title("f=10")
+    axs[0, 0].stem(xf_h1, np.abs(X_h1), use_line_collection=True)
+    axs[0, 0].set_title("widmo + Hann f=10")
     plt.grid()
-    axs[1, 0].plot(t, x2)
-    axs[1, 0].set_title("f=22")
+    axs[1, 0].stem(xf_h2, np.abs(X_h2), use_line_collection=True)
+    axs[1, 0].set_title("widmo + Hann f=22")
     plt.grid()
-    axs[2, 0].plot(t, x3)
-    axs[2, 0].set_title("x1*x2")
+    axs[2, 0].stem(xf_h3, np.abs(X_h3), use_line_collection=True)
+    axs[2, 0].set_title("widmo + Hann x1+x2")
     plt.grid()
     axs[0, 1].stem(xf1, np.abs(X1), use_line_collection=True)
     axs[0, 1].set_title("widmo f=10")
@@ -66,7 +82,7 @@ def Zad1():
     axs[1, 1].set_title("widmo f=22")
     plt.grid()
     axs[2, 1].stem(xf3, np.abs(X3), use_line_collection=True)
-    axs[2, 1].set_title("widmo x1*x2")
+    axs[2, 1].set_title("widmo x1+x2")
     plt.grid()
     axs[0, 2].stem(xf_z1, np.abs(X_z1), use_line_collection=True)
     axs[0, 2].set_title("zero_padding; f=10")
@@ -75,16 +91,16 @@ def Zad1():
     axs[1, 2].set_title("zero_padding; f=22")
     plt.grid()
     axs[2, 2].stem(xf_z3, np.abs(X_z3), use_line_collection=True)
-    axs[2, 2].set_title("zero_padding; x1*x2")
+    axs[2, 2].set_title("zero_padding; x1+x2")
     plt.grid()
-    axs[0, 3].stem(xf_z1, np.abs(X_w1), use_line_collection=True)
+    axs[0, 3].stem(xf_w1, np.abs(X_w1), use_line_collection=True)
     axs[0, 3].set_title("zero_padding+Hann; f=10")
     plt.grid()
-    axs[1, 3].stem(xf_z2, np.abs(X_w2), use_line_collection=True)
+    axs[1, 3].stem(xf_w2, np.abs(X_w2), use_line_collection=True)
     axs[1, 3].set_title("zero_padding+Hann; f=22")
     plt.grid()
-    axs[2, 3].stem(xf_z3, np.abs(X_w3), use_line_collection=True)
-    axs[2, 3].set_title("zero_padding+Hann; x1*x2")
+    axs[2, 3].stem(xf_w3, np.abs(X_w3), use_line_collection=True)
+    axs[2, 3].set_title("zero_padding+Hann; x1+x2")
     plt.grid()
     fig.tight_layout()
     plt.show()
