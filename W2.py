@@ -62,13 +62,63 @@ def zad3():
     plt.title('Analiza częstotliwościowa')
     plt.show()
 
-    # Polepszenie filtra, by mocniej tłumił - metoda najmniejszych kwadratów
+# TODO Polepszenie filtra, by mocniej tłumił - metoda najmniejszych kwadratów
+def zad4():
+    fs = 48000
+    N = 101
     h = sig.firls(N, [0, 1200, 1400, fs / 2], [1, 1, 0, 0], fs=fs)
     plt.plot(h)
     plt.title('Odpowiedź impulsowa filtru - metoda najmniejszych kwadratów')
     plt.show()
 
-def zad4():
+    y = sig.lfilter(h, 1, x)
+    plt.plot(y, label='po')
+    plt.plot(x, label='przed')
+    plt.title('Sygnał przed i po filtracji')
+    plt.legend()
+    plt.show()
+
+    plt.plot(xf, np.abs(fft(y)), label='po')
+    plt.plot(xf, np.abs(fft(x)), label='przed')
+    plt.title('Sygnał przed i po filtracji - transformata Fouriera')
+    plt.legend()
+    plt.show()
+
+    w, hf = sig.freqz(h, worN=248, fs=fs)  # odp. imp. filtra, rozdzielczość (ilość próbek), fs sygnału
+    plt.plot(w, 20 * np.log10(np.abs(hf)))  # przedstawienie w skali logarytmicznej
+    plt.title('Analiza częstotliwościowa')
+    plt.show()
+
+# TODO Polepszenie filtra - Metoda Parksa-McClellana (Remez)
+def zad5():
+    fs = 48000
+    N = 101
+    h = sig.remez(N, [0, 1200, 1400, fs / 2], [1, 0], fs=fs) # nie określamy wzmocnienia dla pasma przejściowego
+    plt.plot(h)
+    plt.title('Odpowiedź impulsowa filtru - metoda Parksa-McClellana')
+    plt.show()
+
+    y = sig.lfilter(h, 1, x)
+    plt.plot(y, label='po')
+    plt.plot(x, label='przed')
+    plt.title('Sygnał przed i po filtracji')
+    plt.legend()
+    plt.show()
+
+    plt.plot(xf, np.abs(fft(y)), label='po')
+    plt.plot(xf, np.abs(fft(x)), label='przed')
+    plt.title('Sygnał przed i po filtracji - transformata Fouriera')
+    plt.legend()
+    plt.show()
+
+    w, hf = sig.freqz(h, worN=248, fs=fs)  # odp. imp. filtra, rozdzielczość (ilość próbek), fs sygnału
+    plt.plot(w, 20 * np.log10(np.abs(hf)))  # przedstawienie w skali logarytmicznej
+    plt.title('Analiza częstotliwościowa')
+    plt.show()
+
+    # h = sig.remez(N, [0, 1200, 1400, fs / 2]/(fs/2), [1, 0]) # unormowana pulsacja, max wartość współ. pulsacji =1
+
+def zad6():
     fs = 48000
     N = 1001
     h = sig.firwin2(N, [0, 1200, 1400, fs / 2], [1, 1, 0, 0], N + 1, window=None, fs=fs)
@@ -79,8 +129,9 @@ def zad4():
 
 def main():
     # zad2()
-    zad3()
+    # zad3()
     # zad4()
+    zad5()
 
 if __name__ == '__main__':
     main()

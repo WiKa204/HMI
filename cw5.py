@@ -14,11 +14,11 @@ import matplotlib.pyplot as plt
 
 
 def filter_emg(data: np.array, fs: int, Rs: int, notch: bool):
-    # print(f'długość sygnału: {len(data)}')
+    print(f'długość sygnału: {len(data)}')
     width = int(len(data))
     cut_off = (fs/2) - 1
     numtaps, beta = signal.kaiserord(Rs, width / (0.5 * fs))
-    # print(f'numpas {numtaps}, beta: {beta}')
+    print(f'numpas {numtaps}, beta: {beta}')
     taps = signal.firwin(numtaps+1, cut_off, window=('kaiser', beta), pass_zero='highpass',
                   scale=False, nyq=0.5 * fs)
     w, h = signal.freqz(taps)
@@ -44,30 +44,20 @@ def filter_force(data: np.array, fs: int):
     # plt.show()
     return signal_filtered, signal_filtered_zero_ph
 
-# 1. Wczytaj sygnał testowy zawierający zarejestrowaną aktywność mięśnia (EMG)
-    # brzuchatego łydki. Częstotliwość próbkowania sygnału wynosi fs=500Hz.
-    # Sygnał EMG jest sygnałem, który zawiera składowe w paśmie 15-5000Hz.
-    # Przeanalizuje sygnał i napisz funkcję
-   # signal_filtered, signal_filtered_zero_ph  = filter_emg(signal, fs=500, Rs=50, notch=True)
+# TODO 1:Wczytaj sygnał zawierający EMG brzuchatego łydki i napisz funkcję
 # Funkcja filtrująca powinna:
-# usunąć artefakty ruchowe bez zmiany kształtu sygnału,
-# gdzie tłumienie powinno wynosić nie mniej niż Rs [dB]
-# usunąć zakłócenie sieciowe i harmoniczne, gdzie oczekiwane stłumienie
-# składowej (i przecieków) zakłócenia harmonicznego nie powinno być mniejsze
-# niż -20dB (na tej podstawie proszę dobrać szerokość pasma) i powinno być
-# włączane argumentem notch=True
-# Funkcja powinna zwracać:
-# sygnał po filtracji: signal_filtered,
-# sygnał po filtracji zerofazowej: signal_filtered_zero_ph
+# - usunąć artefakty ruchowe bez zmiany kształtu sygnału, gdzie tłumienie powinno wynosić nie mniej niż Rs [dB]
+# - usunąć zakłócenie sieciowe i harmoniczne, gdzie oczekiwane stłumienie składowej (i przecieków) zakłócenia harmonicznego
+# nie powinno być mniejsze niż -20dB (na tej podstawie proszę dobrać szerokość pasma) i powinno być włączane argumentem notch=True
 
-data_1: np.array = pd.read_csv('emg.csv')
-fs_12 = 500
+train: np.array = pd.read_csv('emg.csv')
+fs = 500
 
-# data_1['emg'].plot()
+# train['emg'].plot()
 # plt.show()
 
-signal_1 = data_1['emg']
-signal_filtered, signal_filtered_zero_ph  = filter_emg(signal_1, fs=fs_12, Rs=50, notch=True)
+signal_1 = train['emg']
+signal_filtered, signal_filtered_zero_ph  = filter_emg(signal_1, fs=fs, Rs=50, notch=True)
 
 
 # 2. Dla przefiltrowanego sygnału napisz funkcję, która dokona subsamplingu sygnału
@@ -76,7 +66,7 @@ signal_filtered, signal_filtered_zero_ph  = filter_emg(signal_1, fs=fs_12, Rs=50
 # Filtracja antyaliasingowa nie powinna istotnie zmieniać kształtu sygnału, oraz zapewniać, że ew aliasy będą stłumione o nie mniej niż o Rs (wyrażone w dB)
 
 signal_2 = signal_filtered
-signal_subsampled = subsample_emg(signal_2, fs=fs_12, r=3, Rs=30)
+signal_subsampled = subsample_emg(signal_2, fs=fs, r=3, Rs=30)
 
 # 3. Wczytaj sygnał, który zawiera sygnał siły skurczu mięśnia wywołanej
 # stymulacją elektryczną. Impulsy stymulacji elektrycznej 50-200μs i amplitudzie
