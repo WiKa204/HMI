@@ -11,20 +11,27 @@ def filter_emg(data: np.array, fs: int, Rs: int, notch: bool):
     cut_off = (fs/2) - 1
     numtaps, beta = signal.kaiserord(Rs, width / (0.5 * fs))
     print(f'numpas {numtaps}, beta: {beta}')
-    taps = signal.firwin(numtaps+1, cut_off, window=('kaiser', beta), pass_zero='highpass',
+    filtr = signal.firwin(numtaps+1, cut_off, window=('kaiser', beta), pass_zero='highpass',
                   scale=False, nyq=0.5 * fs)
-    plt.plot(taps)
+    plt.plot(filtr)
     plt.title('Odpowiedź impulsowa filtru - okno Kaisera')  # NA KRAŃCACH WIDAĆ NIECIĄGŁOŚCI
     plt.show()
-    w, h = signal.freqz(taps)
+    w, h = signal.freqz(filtr)
     w *= 0.5 * fs / np.pi  # Convert w to Hz
-    # signal_filtered = signal.lfilter(taps, 1, data)
-    signal_filtered = signal.lfilter(w, h, data)  # data
+    signal_filtered = signal.lfilter(filtr, 1, data)
+    # signal_filtered = signal.lfilter(w, h, data)  # data
     signal_filtered_zero_ph = signal.filtfilt(w, h, data, padlen=0)  # data
-    plt.plot(signal_filtered, label='po')
-    plt.plot(data, label='przed')
-    plt.title('Sygnał przed i po filtracji')
-    plt.legend()
+    # plt.plot(signal_filtered, label='po')
+    # plt.plot(data, label='przed')
+    # plt.title('Sygnał przed i po filtracji')
+    # plt.legend()
+    # plt.show()
+    fig, axs = plt.subplots(1, 2)
+    axs[0].plot(data)
+    axs[0].set_title('Sygnał przed filtracją')
+    plt.grid()
+    axs[1].plot(signal_filtered)
+    axs[1].set_title('Sygnał po filtracji')
     plt.show()
     return signal_filtered, signal_filtered_zero_ph
 
@@ -54,7 +61,7 @@ def filter_force(data: np.array, fs: int):
 train: np.array = pd.read_csv('emg.csv') # 15 - 5000 Hz
 fs_train = 500
 
-# train.info()
+train.info()
 data = train['emg']
 plt.plot(data)
 plt.show()

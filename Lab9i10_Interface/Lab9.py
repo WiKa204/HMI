@@ -1,13 +1,28 @@
 import numpy as np
 import pandas as pd
-from scipy import signal
+from scipy import signal as sig
+import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 from sklearn.metrics import confusion_matrix
 
 
-def rms(signal, window=500, stride=100, fs=5120,
-        columns_emg=['EMG_8', 'EMG_9']):  # wartści długości okna i przesunięcia w [ms]
+def filter_emg(data: np.array, fs: int, Rs: int, notch: bool):
+    signal_filtered = data
+    signal_filtered_zero_ph = data
+    return signal_filtered, signal_filtered_zero_ph
+
+
+def subsample_emg(data: np.array, fs: int, r: int, Rs: int):
+    return data
+
+
+def filter_force(data: np.array, fs: int):
+    signal_filtered = data
+    signal_filtered_zero_ph = data
+    return signal_filtered, signal_filtered_zero_ph
+
+def rms(signal, window=500, stride=100, fs=5120, columns_emg=['EMG_8', 'EMG_9']):  # wartści długości okna i przesunięcia w [ms]
 
     return signal[columns_emg].iloc[int(window / 1000 * fs)::int(stride / 1000 * fs)]
 
@@ -30,8 +45,13 @@ def k_mean(features, y_true):
     y_pred = y_true
     return confusion_matrix(y_true, y_pred)
 
-# TODO 1: Wczytaj sygnał MVC, i sygnał treningowy
-train = pd.read_hdf('./data/train.hdf5')
-data = pd.read_hdf('Lab9i10_Interface/mvc.hdf5')
+signal_mvc: np.array = pd.read_hdf('mvc.hdf5')
 
-# TODO 2: Napisz funkcję rms, zc, które dla każdego kanału (kolumna columns_emg) wyznaczy wartości 3 opisanych powyżej cech
+signal_mvc.info()
+data = signal_mvc['EMG_8']
+data.plot()
+plt.show()
+
+norm_coeffs = rms(signal_mvc, window=500, stride=100, fs=5120, columns_emg=['EMG_8', 'EMG_9']).max()
+# norm_emg = norm_emg(signal, norm_coeffs, columns_emg=['EMG_8', 'EMG_9'])
+
