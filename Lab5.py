@@ -202,7 +202,7 @@ def zad4(signal: np.array, xf: np.array):
     plt.show()
 
 def main():
-    # zad1()
+    zad1()
     x, t = zad2()
     fs=500
     xf = fftfreq(len(x), 1 / fs)
