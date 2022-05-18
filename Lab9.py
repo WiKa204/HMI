@@ -32,6 +32,6 @@ def k_mean(features, y_true):
 
 # TODO 1: Wczytaj sygnał MVC, i sygnał treningowy
 train = pd.read_hdf('./data/train.hdf5')
-data = pd.read_hdf('Lab9i10_Interface/mvc.hdf5')
+data = pd.read_hdf('Lab10i11_Interface/mvc.hdf5')
 
 # TODO 2: Napisz funkcję rms, zc, które dla każdego kanału (kolumna columns_emg) wyznaczy wartości 3 opisanych powyżej cech

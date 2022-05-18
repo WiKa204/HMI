@@ -64,6 +64,9 @@ def filter_emg(data: np.array, fs: int, Rs: int, notch: bool):
     # plt.plot(xf, signal_filtered_zero_ph)
     # plt.title('Sygnał zero phase')
     # plt.show()
+    plt.plot(xf, signal_filtered)
+    plt.title('Sygnał bez artefaktów ruchowych')
+    plt.show()
     # plt.plot(xf, np.abs(fft(signal_filtered_zero_ph)))
     # plt.title('Widmo zero phase')
     # plt.show()
@@ -77,35 +80,40 @@ def filter_emg(data: np.array, fs: int, Rs: int, notch: bool):
     plt.ylabel('Poziom widma [dB]')
     plt.legend()
     plt.grid()
-    plt.title('Widmo sygnału przed i po filtracji')
+    plt.title('Sygnał przed i po filtracji')
     plt.show()
     Y = fft(signal_filtered)
     plt.plot(xf, np.abs(Y))
-    plt.title('Widmo sygnału emg po filtracji')
+    plt.title('Widmo sygnału emg po filtracji artefaktów ruchowych')
     plt.show()
 
     if notch==True:
-        df = 2
+        df = 6
         Rp = 20  # 20 max dla zadania
-        freqs = [50, 100, 150, 200, 250]
-        # N, fn = signal.ellipord(47, fs/2, Rp, Rp, fs=fs)
-        # be, ae = signal.ellip(N, Rp, Rp, fn, 'low', fs=fs)
-        # we, he = signal.freqz(be, ae, 2048, fs=fs)
-        # hed = 20 * np.log10(np.abs(he))
+        fz = 244
+        freqs = [50, 100, 150, 200]
         for fr in freqs:
             fd = fr - df
             fg = fr + df
-            if fg>250:
-                fg=249
             N = 501
             h = signal.firwin(N, (fd, fg), pass_zero='bandstop', fs=fs)
             signal_filtered = signal.lfilter(h, 1, signal_filtered)
+            signal_filtered_zero_ph = signal.filtfilt(h, 1, signal_filtered_zero_ph, padlen=0)
 
-            # plt.plot(signal_filtered, label='po')
-            # plt.plot(data, label='przed')
-            # plt.title(f'Sygnał przed i po filtracji składowej {fr} Hz')
-            # plt.legend()
-            # plt.show()
+            plt.plot(xf, np.abs(fft(signal_filtered)), label='po')
+            plt.plot(xf, np.abs(fft(data)), label='przed')
+            plt.title(f'Widmo Sygnału przed i po filtracji składowej {fr} Hz')
+            plt.legend()
+            plt.show()
+        h = signal.firwin(N, fz, pass_zero='lowpass', fs=fs)
+        signal_filtered = signal.lfilter(h, 1, signal_filtered)
+        signal_filtered_zero_ph = signal.filtfilt(h, 1, signal_filtered_zero_ph, padlen=0)
+        plt.plot(xf, np.abs(fft(signal_filtered)), label='po')
+        plt.plot(xf, np.abs(fft(data)), label='przed')
+        plt.title(f'Widmo Sygnału przed i po filtracji składowej 250 Hz')
+        plt.legend()
+        plt.show()
+    print(f'Wartość sygnalu dla 250Hz: {signal_filtered[250]}')
     fig, axs = plt.subplots(1, 2)
     axs[0].plot(data)
     axs[0].set_title('Sygnał przed filtracją')
@@ -114,13 +122,13 @@ def filter_emg(data: np.array, fs: int, Rs: int, notch: bool):
     axs[1].set_title('Sygnał po filtracji')
     plt.show()
 
-    # fig, axs = plt.subplots(1, 2)
-    # axs[0].plot(xf, np.abs(fft(data)))
-    # axs[0].set_title('Widmo przed filtracją')
-    # plt.grid()
-    # axs[1].plot(xf, np.abs(fft(signal_filtered)))
-    # axs[1].set_title('Widmo po filtracji')
-    # plt.show()
+    fig, axs = plt.subplots(1, 2)
+    axs[0].plot(xf, np.abs(fft(data)))
+    axs[0].set_title('Widmo przed filtracją')
+    plt.grid()
+    axs[1].plot(xf, np.abs(fft(signal_filtered)))
+    axs[1].set_title('Widmo po filtracji')
+    plt.show()
 
     # signal_filtered = data
     # signal_filtered_zero_ph = data
@@ -173,7 +181,7 @@ def subsample_emg(data: np.array, fs: int, r: int, Rs: int):
 
 def filter_force(data: np.array, fs: int):
     # filtr medianowy
-    size = 15
+    size = 11
     signal_filtered = signal.medfilt(data.copy(), kernel_size=size)
     # filtracja sygnału
     xf = fftfreq(len(signal_filtered), 1 / fs)
@@ -183,30 +191,8 @@ def filter_force(data: np.array, fs: int):
     plt.plot(xf, np.abs(fft(signal_filtered)))
     plt.title('Widmo Median filtr')
     plt.show()
-    width = 4
-    cut_off = 15
-    numtaps, beta = signal.kaiserord(50, width / (0.5 * fs))
-    print(f'numpas {numtaps}, beta: {beta}')
-    filtr = signal.firwin(numtaps+1, cut_off, window=('kaiser', beta), pass_zero='highpass',
-                          scale=False, fs=fs)
-    plt.plot(filtr)
-    plt.title('Odpowiedź impulsowa filtru - okno Kaisera')  # NA KRAŃCACH WIDAĆ NIECIĄGŁOŚCI
-    plt.show()
-
-    # filtracja sygnału
-    y = signal.lfilter(filtr, 1, data)  # data
-
-    # widmo sygnału przed i po filtracji
-    plt.figure()
-    plt.plot(signal_filtered, label='Oryginalny')
-    plt.plot(y, label='Po filtracji')
-    plt.title('Filtracja składowej O Hz')
-    plt.legend()
-    plt.show()
-    plt.plot(xf, np.abs(fft(y)))
-    plt.title('WIdmo przefiltrowane')
-    signal_filtered = y
-    signal_filtered_zero_ph = y
+    signal_filtered = signal_filtered
+    signal_filtered_zero_ph = signal_filtered
     return signal_filtered, signal_filtered_zero_ph
 
 # TODO 1:Wczytaj sygnał zawierający EMG brzuchatego łydki i napisz funkcję
