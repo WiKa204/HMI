@@ -1,55 +1,43 @@
 import numpy as np
 import pandas as pd
-from scipy import signal as sig
+from scipy import signal
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 from sklearn.metrics import confusion_matrix
 from scipy.fft import fft, fftfreq
 
-def rms(signal, window=500, stride=100, fs=5120):  # wartści długości okna i przesunięcia w [ms]
-    data = signal.values
-    # print(data)
+def rms(data):
+    data_rms = data.copy()
     x_diff =0
-    for i in range(0, len(data)-window, stride):
-        for n in range(i, i+window, 1):
-            x_diff += pow(data[n], 2)
-            rsm = np.sqrt(x_diff/window)
-    return rsm
+    for i in range(0, len(data_rms), 1):
+        x_diff += pow(data_rms[i], 2)
+        data_rms[i] = np.sqrt(x_diff/(i+1))
+    rms = np.sqrt(x_diff/(len(data_rms)+1))
+    return max(data_rms)
 
-def filter_emg(data: np.array, fs: int, Rs: int, notch: bool):
-    # artefakty ruchowe - usunąć wszystko poniżej 15 Hz
-    # filtr pasmowy dla zakłóceń sieciowych 50, 100, 150 ...
+def filter_emg(data, fs: int, Rs: int, notch: bool):
+    # f. górnoprzepustowy - 15 Hz - artefakt ruchowy
     xf = fftfreq(len(data), 1 / fs)
     width = 4
     cut_off = 15
-    numtaps, beta = sig.kaiserord(Rs, width / (0.5 * fs))
-    filtr = sig.firwin(numtaps + 1, cut_off, window=('kaiser', beta), pass_zero='highpass',
+    numtaps, beta = signal.kaiserord(Rs, width / (0.5 * fs))
+    filtr = signal.firwin(numtaps + 1, cut_off, window=('kaiser', beta), pass_zero='highpass',
                           scale=False, fs=fs)
-    w, h = sig.freqz(filtr, worN=2048, fs=fs)
-    h_db = 20 * np.log10(np.abs(h))
-    phase = np.degrees(np.angle(h))
-
     # filtracja sygnału
-    signal_filtered = sig.lfilter(filtr, 1, data)  # data
-    signal_filtered_zero_ph = sig.filtfilt(filtr, 1, data, padlen=0)  # data
+    signal_filtered = signal.lfilter(filtr, 1, data)
+    # notch filter - 50 Hz - f. eliptyczny - wyświetlić fouriera
+    if notch==True:
+        fp = np.array([48, 52]) # fpass [Hz]
+        fz = np.array([49, 51])  # fstop [Hz]
+        Rp = 3  # -3dB w paśmie przepustowym
+        Rs = 50  # -100db w paśmie zaporowym
+        fs = 500  # częstotliwość próbkowania
+        N, fn = signal.ellipord(fp, fz, Rp, Rs, fs=fs)
+        b, a = signal.ellip(N, Rp, Rs, fn, 'bandstop', fs=fs)
+        signal_filtered = signal.filtfilt(b, a, signal_filtered, method="gust", padlen=0)
 
-    if notch == True:
-        df = 6
-        Rp = 20  # 20 max dla zadania
-        fz = 244
-        freqs = [50, 100, 150, 200]
-        for fr in freqs:
-            fd = fr - df
-            fg = fr + df
-            N = 501
-            h = sig.firwin(N, (fd, fg), pass_zero='bandstop', fs=fs)
-            signal_filtered = sig.lfilter(h, 1, signal_filtered)
-            signal_filtered_zero_ph = sig.filtfilt(h, 1, signal_filtered_zero_ph, padlen=0)
-        h = sig.firwin(N, fz, pass_zero='lowpass', fs=fs)
-        signal_filtered = sig.lfilter(h, 1, signal_filtered)
-        signal_filtered_zero_ph = sig.filtfilt(h, 1, signal_filtered_zero_ph, padlen=0)
-    return signal_filtered, signal_filtered_zero_ph
+    return signal_filtered
 
 
 def subsample_emg(data: np.array, fs: int, r: int, Rs: int):

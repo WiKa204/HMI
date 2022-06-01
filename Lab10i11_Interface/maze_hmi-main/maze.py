@@ -2,6 +2,7 @@
 
 import pygame
 from pygame.locals import *
+from collections import deque
 from Lab10i11_Interface.Functions import *
 from Lab10i11_Interface.pytrignos.pytrignos import TrignoAdapter
 
