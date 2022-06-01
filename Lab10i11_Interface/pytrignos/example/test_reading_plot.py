@@ -1,6 +1,6 @@
 import time
 
-from pytrignos import TrignoAdapter
+from Lab10i11_Interface.pytrignos.pytrignos import TrignoAdapter
 
 import numpy as np
 from matplotlib.lines import Line2D
@@ -44,7 +44,7 @@ class Scope:
 
 trigno_sensors = TrignoAdapter()
 # trigno_sensors.add_sensors(sensors_mode='ORIENTATION', sensors_ids=(4,), sensors_labels=('ORIENTATION1',), host='192.168.4.118')
-trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(4,), sensors_labels=('EMG1',), host='192.168.4.118')
+trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(5,), sensors_labels=('EMG1',), host='150.256.46.37')
 
 trigno_sensors.start_acquisition()
 

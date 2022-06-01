@@ -11,9 +11,11 @@ def rms(data):
     data_rms = data.copy()
     x_diff =0
     for i in range(0, len(data_rms), 1):
+        print(i)
+        # print(data_rms)
         x_diff += pow(data_rms[i], 2)
         data_rms[i] = np.sqrt(x_diff/(i+1))
-    rms = np.sqrt(x_diff/(len(data_rms)+1))
+    # rms = np.sqrt(x_diff/(len(data_rms)+1))
     return max(data_rms)
 
 def filter_emg(data, fs: int, Rs: int, notch: bool):
@@ -36,7 +38,7 @@ def filter_emg(data, fs: int, Rs: int, notch: bool):
         N, fn = signal.ellipord(fp, fz, Rp, Rs, fs=fs)
         b, a = signal.ellip(N, Rp, Rs, fn, 'bandstop', fs=fs)
         signal_filtered = signal.filtfilt(b, a, signal_filtered, method="gust", padlen=0)
-
+        xf = fftfreq(len(data), 1 / fs)
     return signal_filtered
 
 
@@ -66,8 +68,19 @@ def find_threshold(signal, columns_emg=['EMG_8', 'EMG_9'], column_gesture='TRAJ_
     return signal.loc[signal[column_gesture] == idle_gesture_id, columns_emg].mean()
 
 
-def norm_emg(signal, norm_coeffs):
-    norm_signal = signal / norm_coeffs
+def norm_emg(data, norm_coeffs):
+    data_rms = data.copy()
+    x_diff = 0
+    for i in range(0, len(data_rms), 1):
+        # print('normalizacja')
+        x_diff += pow(data_rms[i], 2)
+        data_rms[i] = np.sqrt(x_diff / (i + 1))
+    rms = np.sqrt(x_diff/(len(data_rms)+1))
+    print(len(data_rms))
+    print(f'rms: {rms}')
+    # norm_signal = data / norm_coeffs
+    norm_signal = rms / norm_coeffs
+    print(norm_signal)
     return norm_signal
 
 

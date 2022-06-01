@@ -1,10 +1,17 @@
 #The code was adapted from https://pythonspot.com/maze-in-pygame/
 
 import pygame
+import time
 from pygame.locals import *
 from collections import deque
+from matplotlib.lines import Line2D
+import matplotlib.pyplot as plt
+from scipy.fft import fft, fftfreq
+import matplotlib.animation as animation
 from Lab10i11_Interface.Functions import *
 from Lab10i11_Interface.pytrignos.pytrignos import TrignoAdapter
+from Lab10i11_Interface.pytrignos.example.test_reading_plot import Scope
+
 
 class Player:
 
@@ -95,14 +102,17 @@ class App:
         self.maze = Maze()
 
         # TODO 1: AKWIZYCJA DANYCH
-        # self._fs = 1926 #[Hz]
-        # self.triango_sensors = TrignoAdapter()
-        # self.triango_sensors.add_sensors(mode='EMG', sensors_ids=(7,), sensors_labels=('EMG1',), host='150.256.46.37')
-        # self.trigno_sensors.start_acquisition()
+        self._fs = 1926 #[Hz]
+        self._length = 250
+        self.trigno_sensors = TrignoAdapter()
+        self.trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(1,), sensors_labels=('EMG1',), host='150.254.46.37')
+
 
     def on_init(self):
         pygame.init()
         self._display_surf = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
+        # TODO 1: AKWIZYCJA DANYCH
+        self.trigno_sensors.start_acquisition()
 
         pygame.display.set_caption('Maze')
         self._running = True
@@ -110,12 +120,14 @@ class App:
         self._block_surf = pygame.image.load("block.png").convert()
         self._exit_surf = pygame.image.load("exit.png").convert()
 
+
     def on_event(self, event):
         if event.type == QUIT:
             self._running = False
 
     def on_loop(self):
         pass
+
 
     def on_render(self):
         self._display_surf.fill((0, 0, 0))
@@ -125,47 +137,82 @@ class App:
 
     def on_cleanup(self):
         pygame.quit()
+        # TODO 1: AKWIZYCJA DANYCH
+        self.trigno_sensors.stop_acquisition()
 
     def on_execute(self):
         if not self.on_init():
             self._running = True
 
+        bufor = deque(maxlen=self._length)
+
+        i = 0
+        n = 0
+        time_period = 0.5  # s
+
         while self._running:
-
-            pygame.event.pump()
-
+            time.sleep(time_period)
             # TODO 1: AKWIZYCJA DANYCH
-            # sensors_reading = self.trigno_sensors.sensors_reading()
-            # data = sensors_reading['EMG'].values
+            sensors_reading = self.trigno_sensors.sensors_reading()
 
-            # TODO 2: FILTRACJA
-            # signal_filtered, signal_filtered_zero_ph = filter_emg(data, fs=self._fs, Rs=50, notch=True)
+            print(f" Dane: {sensors_reading['EMG'].values}")
+            bufor.extend(sensors_reading['EMG'].values)
+            # print(bufor)
+            if len(bufor) != self._length:
+                n += 1
+                continue
+            if i == 0:
+                # print(bufor)
+                # print(len(bufor))
+                max_rms = 10e-5 #rms(np.array(bufor))
+                # print(f'max rms: {max_rms}')
+                i +=1
+            else:
+                data = bufor
+                data_filtered = filter_emg(data=data, fs=self._fs, Rs=50, notch=True)
 
-            # TODO 3: RMS
-            # norm_coeffs = rms(signal_filtered_zero_ph, window=500, stride=100, fs=self._fs)
+                normalized_data = norm_emg(data=data, norm_coeffs=max_rms)
+                pygame.event.pump()
 
-            # TODO 4: NORMALIZACJA
-            # norm_emgs = norm_emg(signal_filtered_zero_ph, norm_coeffs)
+                # data = sensors_reading['EMG'].values
 
-            keys = pygame.key.get_pressed()
+                # TODO 2: FILTRACJA
+                # signal_filtered, signal_filtered_zero_ph = filter_emg(data, fs=self._fs, Rs=50, notch=True)
 
-            if keys[K_RIGHT]:
-                self.player.move_right(self.maze)
+                # TODO 3: RMS
+                # norm_coeffs = rms(signal_filtered_zero_ph, window=500, stride=100, fs=self._fs)
 
-            if keys[K_LEFT]:
-                self.player.move_left(self.maze)
+                # TODO 4: NORMALIZACJA
+                # norm_emgs = norm_emg(signal_filtered_zero_ph, norm_coeffs)
 
-            if keys[K_UP]:
-                self.player.move_up(self.maze)
+                keys = pygame.key.get_pressed()
 
-            if keys[K_DOWN]:
-                self.player.move_down(self.maze)
+                if normalized_data >= 0.3 and normalized_data <= 0.5:
+                    self.player.move_right(self.maze)
 
-            if keys[K_ESCAPE]:
-                self._running = False
+                # if keys[K_RIGHT]:
+                #     self.player.move_right(self.maze)
 
-            if self.maze.is_exit(self.player.x, self.player.y):
-                self._running = False
+                if  normalized_data >= 0.6:
+                    self.player.move_left(self.maze)
+
+                # if keys[K_LEFT]:
+                #     self.player.move_left(self.maze)
+
+                if keys[K_UP]:
+                    self.player.move_up(self.maze)
+
+                if normalized_data < 0.3:
+                    self.player.move_down(self.maze)
+
+                # if keys[K_DOWN]:
+                #     self.player.move_down(self.maze)
+
+                if keys[K_ESCAPE]:
+                    self._running = False
+
+                if self.maze.is_exit(self.player.x, self.player.y):
+                    self._running = False
 
             self.on_loop()
             self.on_render()
