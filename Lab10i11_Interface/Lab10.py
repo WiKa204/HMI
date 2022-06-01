@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy import signal
 import matplotlib.pyplot as plt
-from scipy.fft import fft, fftfreq
+from scipy.fft import rfft, rfftfreq, fft, fftfreq
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
 
@@ -78,7 +78,7 @@ fs = 1920
 signal_filtered = filter_emg(mvc['EMG_8'], fs=500, Rs=50, notch=True)
 
 data = mvc['EMG_8']
-Y = fft(data.values)
+Y = rfft(data.values)
 T = 32
 dt = 1.0 / fs
 t = np.arange(0, T, dt)
@@ -93,16 +93,16 @@ t = np.arange(0, T, dt)
 # axs[1].set_title("Przefiltowany sygnał")
 # plt.show()
 
-fs = 500
-xf = fftfreq(len(data), 1/fs)
-# fig, axs = plt.subplots(1, 2)
-# plt.grid()
-# axs[0].plot(xf, np.abs(Y))
-# axs[0].set_title("Transformata surowego sygnału")
-# plt.grid()
-# axs[1].plot(xf, np.abs(fft(signal_filtered)))
-# axs[1].set_title("Transformata przefiltrowanego sygnału")
-# plt.show()
+fs = 1295
+xf = rfftfreq(len(data), 1/fs)
+fig, axs = plt.subplots(1, 2)
+plt.grid()
+axs[0].plot(xf, np.abs(Y))
+axs[0].set_title("Transformata surowego sygnału")
+plt.grid()
+axs[1].plot(xf, np.abs(rfft(signal_filtered)))
+axs[1].set_title("Transformata przefiltrowanego sygnału")
+plt.show()
 
 max_rms = rms(data=signal_filtered, fs=500)
 data_signal_filtered = filter_emg(train['EMG_8'], fs=500, Rs=50, notch=True)
