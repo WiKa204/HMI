@@ -94,10 +94,10 @@ class App:
         self.maze = Maze()
 
         # TODO 1: AKWIZYCJA DANYCH
-        self._fs = 1926 #[Hz]
-        self.triango_sensors = TrignoAdapter()
-        self.triango_sensors.add_sensors(mode='EMG', sensors_ids=(7,), sensors_labels=('EMG1',), host='150.256.46.37')
-        self.trigno_sensors.start_acquisition()
+        # self._fs = 1926 #[Hz]
+        # self.triango_sensors = TrignoAdapter()
+        # self.triango_sensors.add_sensors(mode='EMG', sensors_ids=(7,), sensors_labels=('EMG1',), host='150.256.46.37')
+        # self.trigno_sensors.start_acquisition()
 
     def on_init(self):
         pygame.init()
@@ -134,17 +134,17 @@ class App:
             pygame.event.pump()
 
             # TODO 1: AKWIZYCJA DANYCH
-            sensors_reading = self.trigno_sensors.sensors_reading()
-            data = sensors_reading['EMG'].values
+            # sensors_reading = self.trigno_sensors.sensors_reading()
+            # data = sensors_reading['EMG'].values
 
             # TODO 2: FILTRACJA
-            signal_filtered, signal_filtered_zero_ph = filter_emg(data, fs=self._fs, Rs=50, notch=True)
+            # signal_filtered, signal_filtered_zero_ph = filter_emg(data, fs=self._fs, Rs=50, notch=True)
 
             # TODO 3: RMS
-            norm_coeffs = rms(signal_filtered_zero_ph, window=500, stride=100, fs=self._fs)
+            # norm_coeffs = rms(signal_filtered_zero_ph, window=500, stride=100, fs=self._fs)
 
             # TODO 4: NORMALIZACJA
-            norm_emgs = norm_emg(signal_filtered_zero_ph, norm_coeffs)
+            # norm_emgs = norm_emg(signal_filtered_zero_ph, norm_coeffs)
 
             keys = pygame.key.get_pressed()
 

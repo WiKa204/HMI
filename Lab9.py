@@ -69,7 +69,7 @@ def k_mean(features, y_true):
     return confusion_matrix(y_true, y_pred)
 
 # TODO 1: Wczytaj sygnał MVC, i sygnał treningowy
-train = pd.read_hdf('./data/train.hdf5')
+train = pd.read_hdf('Lab10i11_Interface/train.hdf5')
 data = pd.read_hdf('Lab10i11_Interface/mvc.hdf5')
 print(train.head())
 
