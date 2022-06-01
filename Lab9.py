@@ -51,9 +51,10 @@ def find_threshold(signal, columns_emg=['EMG_8', 'EMG_9'], column_gesture='TRAJ_
     for column in columns_emg:
         ts_column = signal[signal[column_gesture] == idle_gesture_id][column].abs().mean()
         thresholds[column] = ts_column
-    # thresholds_df = pd.DataFrame(thresholds)
+    thresholds_df = pd.DataFrame(thresholds, index=[0])
     # print(thresholds_df)
-    return signal.loc[signal[column_gesture] == idle_gesture_id, columns_emg].mean()
+    return thresholds_df
+        #signal.loc[signal[column_gesture] == idle_gesture_id, columns_emg].mean()
 
 
 def norm_emg(signal, norm_coeffs, columns_emg=['EMG_8', 'EMG_9']):
@@ -70,6 +71,7 @@ def k_mean(features, y_true):
 # TODO 1: Wczytaj sygnał MVC, i sygnał treningowy
 train = pd.read_hdf('./data/train.hdf5')
 data = pd.read_hdf('Lab10i11_Interface/mvc.hdf5')
+print(train.head())
 
 # TODO 2: Napisz funkcję rms, zc, które dla każdego kanału (kolumna columns_emg) wyznaczy wartości 3 opisanych powyżej cech
 feature_rms = rms(train, window=500, stride=100, fs=5120,
@@ -80,3 +82,4 @@ feature_rms = rms(train, window=500, stride=100, fs=5120,
 
 # TODO 3: Wyznacz wartość progu dla funkcji zc - próg to 95% wszystkich próbek szumu
 threshold = find_threshold(train, columns_emg=['EMG_8', 'EMG_9'], column_gesture='TRAJ_GT', idle_gesture_id=0)
+print(threshold)

@@ -2,7 +2,8 @@
 
 import pygame
 from pygame.locals import *
-
+from Lab10i11_Interface.Functions import *
+from Lab10i11_Interface.pytrignos.pytrignos import TrignoAdapter
 
 class Player:
 
@@ -50,7 +51,7 @@ class Maze:
                      1, 0, 1, 0, 0, 0, 0, 0, 0, 1,
                      1, 0, 1, 0, 1, 1, 1, 1, 0, 1,
                      1, 0, 0, 0, 0, 0, 0, 0, 0, 2,
-                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ]
+                     1, 1, 1, 1, 1, 1, False, 1, 1, 1, 1, ]
 
     def draw(self, display_surf, image_surf, exit_surf):
         bx = 0
@@ -92,6 +93,12 @@ class App:
         self.player = Player()
         self.maze = Maze()
 
+        # TODO 1: AKWIZYCJA DANYCH
+        self._fs = 1926 #[Hz]
+        self.triango_sensors = TrignoAdapter()
+        self.triango_sensors.add_sensors(mode='EMG', sensors_ids=(7,), sensors_labels=('EMG1',), host='150.256.46.37')
+        self.trigno_sensors.start_acquisition()
+
     def on_init(self):
         pygame.init()
         self._display_surf = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
@@ -123,7 +130,22 @@ class App:
             self._running = True
 
         while self._running:
+
             pygame.event.pump()
+
+            # TODO 1: AKWIZYCJA DANYCH
+            sensors_reading = self.trigno_sensors.sensors_reading()
+            data = sensors_reading['EMG'].values
+
+            # TODO 2: FILTRACJA
+            signal_filtered, signal_filtered_zero_ph = filter_emg(data, fs=self._fs, Rs=50, notch=True)
+
+            # TODO 3: RMS
+            norm_coeffs = rms(signal_filtered_zero_ph, window=500, stride=100, fs=self._fs)
+
+            # TODO 4: NORMALIZACJA
+            norm_emgs = norm_emg(signal_filtered_zero_ph, norm_coeffs)
+
             keys = pygame.key.get_pressed()
 
             if keys[K_RIGHT]:
