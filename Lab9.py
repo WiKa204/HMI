@@ -37,6 +37,7 @@ def zc(signal, threshold: float = 0.1, window: float = 500, stride: float = 100,
         data = signal[column].values
         zc = 0
         data_filtred = data[(data > threshold) | (data < - threshold)]
+
         for i in range(0, len(data) - window, stride):
             for n in range(i+1, i + window, 1):
                 sign = data[n]*data[n-1]
