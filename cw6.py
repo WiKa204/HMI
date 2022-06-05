@@ -17,25 +17,23 @@ def rms(data: np.array, window=500, stride=100, fs=5120,
 
 def zc(data, threshold: float = 0.1, window: float = 500, stride: float = 100, fs=5120,
        columns_emg=['EMG_8', 'EMG_9']):  # wartści długości okna i przesunięci[column columns_emg].iloc[]
+    zc_count = {}
     for column in columns_emg:
-        zc_count = []
-        zc = 0
-        thresh = threshold * (np.max(data[column]))
         signal_zc = data[column].values
-        # print(len(signal_zc))
-        for i in range(0, len(data), 1):
-            if (signal_zc[i] > thresh | signal_zc[i] < - threshold ):
-                zc_count.append(signal_zc[i])
-        print(zc_count)
-        plt.plot(zc_count)
-        plt.show()
-        for n in range(1, len(zc_count), 1):
-            sign = zc_count[n] * zc_count[n - 1]
-            if (sign < 0):
-                zc += 1
-        print(len(zc_count))
-        print(zc)
-    return data[columns_emg].iloc[int(window / 1000 * fs)::int(stride / 1000 * fs)]
+        zc = 0
+        thresh = threshold * (np.max(signal_zc))
+        data_filtred = signal_zc[(signal_zc > thresh) | (signal_zc < - thresh)]
+
+        for i in range(0, len(data_filtred) - window, stride):
+            zc_temp = 0
+            for n in range(i+1, i + window, 1):
+                sign = data_filtred[n]*data_filtred[n-1]
+                if(sign<0):
+                    zc += 1
+                    zc_temp += 1
+            data_filtred[i:(i + window)] = zc_temp
+        zc_count[column] = zc
+    return zc_count
 
 
 def find_threshold(data, columns_emg=['EMG_8', 'EMG_9'], column_gesture='TRAJ_GT', idle_gesture_id=0):
@@ -45,20 +43,15 @@ def find_threshold(data, columns_emg=['EMG_8', 'EMG_9'], column_gesture='TRAJ_GT
         szum_signal = np.zeros(len(signal_thresh))
         szum_signal[data[column_gesture]==idle_gesture_id] = signal_thresh[data[column_gesture]==idle_gesture_id]
         szum = signal_thresh[data[column_gesture]==idle_gesture_id]
-        plt.plot(szum_signal, label=f'szum {column}')
-        plt.legend()
-        plt.show()
         threshold = 2*np.std(szum)
         thresholds[column] = threshold
-    print(thresholds)
-    return data.loc[data[column_gesture] == idle_gesture_id, columns_emg].mean()
+    return thresholds
 
 
 def norm_emg(data, norm_coeffs, columns_emg=['EMG_8', 'EMG_9']):
     coeffs = norm_coeffs[columns_emg]
     for column in columns_emg:
         normal_signal = data[column].values
-        print(norm_coeffs[column])
         normal_signal = normal_signal / norm_coeffs[column]
         data[column] = normal_signal
     return data[columns_emg]
@@ -76,14 +69,14 @@ signal_mvc = pd.read_hdf('Lab10i11_Interface/mvc.hdf5')
 # plt.title('sygnał MVC')
 # plt.show()
 #
-train[['EMG_8', 'EMG_9']].plot()
-plt.title('sygnał treningowy')
-plt.show()
+# train[['EMG_8', 'EMG_9']].plot()
+# plt.title('sygnał treningowy')
+# plt.show()
 
 
 # TODO 2: Napisz funkcję rms, zc, które dla każdego kanału(kolumna
 #  columns_emg) wyznaczy wartości 3 opisanych powyżej cech
-feature_rms = rms(train, window=500, stride=100, fs=5120,
+feature_rms = rms(train.copy(), window=500, stride=100, fs=5120,
                  columns_emg=['EMG_8', 'EMG_9'])  # wartści długości okna i przesunięcia w [ms]
 
 # plt.plot(train['EMG_8'], label='sygnal')
@@ -99,32 +92,36 @@ feature_rms = rms(train, window=500, stride=100, fs=5120,
 # plt.show()
 
 feature_zc = zc(train.copy(), threshold=0.1, window=500, stride=100, fs=5120,
-                columns_emg=['EMG_8', 'EMG_9'])  # wartści długości okna i przesunięcia w [ms]
+                 columns_emg=['EMG_8', 'EMG_9'])  # wartści długości okna i przesunięcia w [ms]
 
+# print(feature_zc)
 
 # TODO 3: Analizując kolumnę TRAJ_GT zauważ, że wartość gestu 0 odpowiadającą
 #  brakowi ruchu(ręka jest w stanie neutralnym).Dla każdego kanału wyznacz
 #  wartość progu dla funkcji `zc`, zakładając, że próg stanowi wartość,
 #  dla której mieści się 95 % wszystkich próbek szumu
-threshold = find_threshold(train, columns_emg=['EMG_8', 'EMG_9'], column_gesture='TRAJ_GT', idle_gesture_id = 0)
+threshold = find_threshold(train.copy(), columns_emg=['EMG_8', 'EMG_9'], column_gesture='TRAJ_GT', idle_gesture_id = 0)
 
+# print(threshold)
 
 # TODO 4: Napisz funkcję norm_emg normalizującą sygnał emg
-#norm_coeffs = rms(signal_mvc, window=500, stride=100, fs=5120, columns_emg=['EMG_8', 'EMG_9']).max()
-#norm_emg = norm_emg(feature_rms.copy(), norm_coeffs, columns_emg=['EMG_8', 'EMG_9'])
+norm_coeffs = rms(signal_mvc.copy(), window=500, stride=100, fs=5120, columns_emg=['EMG_8', 'EMG_9']).max()
+norm_emg = norm_emg(feature_rms.copy(), norm_coeffs, columns_emg=['EMG_8', 'EMG_9'])
 
-fig, axs = plt.subplots(2, 2)
-axs[0, 0].plot(train['EMG_8'])
-axs[0, 0].set_title("sygnal EMG_8")
-plt.grid()
-axs[1, 0].plot(norm_emg['EMG_8'])
-axs[1, 0].set_title("norm EMG_8")
-plt.grid()
-axs[0, 1].plot(train['EMG_9'])
-axs[0, 1].set_title("sygnal EMG_9")
-plt.grid()
-axs[1, 1].plot(norm_emg['EMG_9'])
-axs[1, 1].set_title("norm EMG_9")
-plt.grid()
-fig.tight_layout()
-plt.show()
+# print(norm_coeffs)
+
+# fig, axs = plt.subplots(2, 2)
+# axs[0, 0].plot(train['EMG_8'])
+# axs[0, 0].set_title("sygnal EMG_8")
+# plt.grid()
+# axs[1, 0].plot(norm_emg['EMG_8'])
+# axs[1, 0].set_title("norm EMG_8")
+# plt.grid()
+# axs[0, 1].plot(train['EMG_9'])
+# axs[0, 1].set_title("sygnal EMG_9")
+# plt.grid()
+# axs[1, 1].plot(norm_emg['EMG_9'])
+# axs[1, 1].set_title("norm EMG_9")
+# plt.grid()
+# fig.tight_layout()
+# plt.show()
